@@ -1,0 +1,19 @@
+{
+  "name": "100ppi",
+  "version": "0.0.1",
+  "license": "MIT",
+  "scripts": {
+    "start": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "crawler": "^1.2.0",
+    "moment": "^2.22.2"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^0.22.9",
+    "@types/node": "^10.11.7",
+    "tslint": "^5.11.0",
+    "tslint-config-airbnb": "^5.11.0",
+    "typescript": "^3.1.3"
+  }
+}
