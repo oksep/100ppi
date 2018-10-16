@@ -1,12 +1,12 @@
-const CONTENT = `
+const MOCK_CONTENT = `
 <table width="100%" border="0" cellpadding="3" cellspacing="1" bgcolor="#c7d8ff" class="ftab" id="fdata">
     <tbody>
-			<tr0>
+			<tr>
 					<td rowspan="2" align="center" bgcolor="#fafdff"><strong>商品</strong></td>
 					<td align="center" bgcolor="#e9f1fb"><strong>现货 </strong></td>
 					<td colspan="3" align="center" bgcolor="#e9f1fb"><strong>最近合约</strong></td>
 					<td colspan="3" align="center" bgcolor="#e9f1fb"><strong>主力合约</strong></td>
-			</tr0>
+			</tr>
 			<tr>
 					<td align="center" bgcolor="#fafdff">价格</td>
 					<td align="center" bgcolor="#fafdff">代码</td>
@@ -1143,4 +1143,4 @@ const CONTENT = `
 </table>
 `;
 
-export default CONTENT;
+export default MOCK_CONTENT;

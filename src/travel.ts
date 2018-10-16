@@ -1,13 +1,12 @@
-import CONTENT from './mock/content';
+import MOCK_CONTENT from './mock/content';
 import cheerio from 'cheerio';
 import {Commodity, Contracts, SpotGoods} from './model';
-//
-// console.log(URLS);
-// console.log(CONTENT);
-
 
 function travelTr2Exchange(tr: Cheerio): string {
 	const text = tr.children().first().text();
+	if (text.includes('暂无数据')) {
+		throw new Error('暂无数据');
+	}
 	const isExchange = text.includes('交易所');
 	if (isExchange) {
 		return text.trim();
@@ -41,9 +40,9 @@ function travelTr2Commodity(tr: Cheerio): Commodity {
 function genRecentContracts(tds: Cheerio): Contracts {
 	const subTd = tds.find('font');
 	return new Contracts(
-		tds.eq(2).text(),
+		tds.eq(2).text().trim(),
 		parseFloat(tds.eq(3).text().trim()),
-		subTd.eq(0).text(),
+		subTd.eq(0).text().trim(),
 		subTd.eq(1).text().trim()
 	);
 }
@@ -51,39 +50,42 @@ function genRecentContracts(tds: Cheerio): Contracts {
 function genMainContracts(tds: Cheerio): Contracts {
 	const subTd = tds.find('font');
 	return new Contracts(
-		tds.eq(5).text(),
+		tds.eq(5).text().trim(),
 		parseFloat(tds.eq(6).text().trim()),
-		subTd.eq(2).text(),
+		subTd.eq(2).text().trim(),
 		subTd.eq(3).text().trim()
 	);
 }
 
-function log(any) {
-	console.log(any)
-}
-
-export function travel(): any {
-	const $ = cheerio.load(CONTENT);
-	const trs = $('tbody', 'table#fdata.ftab').children();
+export function travel($: CheerioStatic): any {
+	// const trs = $('table#fdata.ftab').children('tbody').first().children('tr');
+	const trs = $('#fdata.ftab').children();
 	const result: { [key: string]: Commodity[] } = {};
 
 	let lastExchangeName = 'Unknown';
 
 	for (let i = 2; i < trs.length; i++) {
 		const tr = trs.eq(i);
-		const exchangeName = travelTr2Exchange(tr);
 
-		if (exchangeName != null) {
-			lastExchangeName = exchangeName;
-		} else {
-			const list = result[lastExchangeName] || [];
-			result[lastExchangeName] = list;
-			list.push(travelTr2Commodity(tr));
+		try {
+			const exchangeName = travelTr2Exchange(tr);
+
+			if (exchangeName != null) {
+				lastExchangeName = exchangeName;
+			} else {
+				const list = result[lastExchangeName] || [];
+				result[lastExchangeName] = list;
+				list.push(travelTr2Commodity(tr));
+			}
+		} catch (e) {
+			// console.error(e.message);
+			return null;
 		}
 	}
-
-	log(
-		`result: ${JSON.stringify(result, null, 2)}`
-	);
 	return result;
+}
+
+export function travelMock() {
+	const $ = cheerio.load(MOCK_CONTENT);
+	return travel($)
 }
