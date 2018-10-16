@@ -5,13 +5,11 @@ import fs from 'fs';
 import Crawler from 'crawler';
 import DATES from "./date";
 
-const BASE_URL = 'http://www.100ppi.com/sf/day-';
-
 const c = new Crawler({
-	maxConnections: 10,
-	// This will be called for each crawled page
+	rateLimit: 1000,
+	// maxConnections: 10,
 	callback: function (error, res, done) {
-		const date = res.options.uri.substring(BASE_URL.length).split('.html')[0];
+		const date = res.options.date;
 		if (error) {
 			console.log('Error date', date, error);
 		} else {
@@ -21,7 +19,7 @@ const c = new Crawler({
 				const result = travel(res.$);
 				if (result != null) {
 					console.log(date, 'completed');
-					fs.writeFile(`/Users/renyufeng/Desktop/cvs/${date}.json`, JSON.stringify(result, null, 2), 'utf8', () => {
+					fs.writeFile(`/Users/renyufeng/Desktop/cvs2/${date}.json`, JSON.stringify(result, null, 2), 'utf8', () => {
 					});
 				} else {
 					console.log(date, 'failed');
@@ -32,5 +30,11 @@ const c = new Crawler({
 	}
 });
 
-const urls = DATES.map(date => `${BASE_URL}${date}.html`);
+const urls = DATES.map(date => {
+	return {
+		uri: `http://www.100ppi.com/sf/day-${date}.html`,
+		date: date
+	}
+});
+
 c.queue(urls);
