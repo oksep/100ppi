@@ -1,5 +1,11 @@
+import * as fs from 'fs';
+
+import * as Crawler from 'crawler';
+import * as cheerio from 'cheerio';
+
+import DATES from "./date";
 import MOCK_CONTENT from './mock/content';
-import cheerio from 'cheerio';
+
 import {Commodity, Contracts, SpotGoods} from './model';
 
 function travelTr2Exchange(tr: Cheerio): string {
@@ -57,7 +63,7 @@ function genMainContracts(tds: Cheerio): Contracts {
 	);
 }
 
-export function travel($: CheerioStatic): any {
+function travel($: CheerioStatic): any {
 	// const trs = $('table#fdata.ftab').children('tbody').first().children('tr');
 	const trs = $('#fdata.ftab').children();
 	const result: { [key: string]: Commodity[] } = {};
@@ -85,7 +91,43 @@ export function travel($: CheerioStatic): any {
 	return result;
 }
 
-export function travelMock() {
+function travelMock() {
 	const $ = cheerio.load(MOCK_CONTENT);
 	return travel($)
+}
+
+export function startCrawler() {
+	const c = new Crawler({
+		rateLimit: 1000,
+		// maxConnections: 10,
+		callback: function (error, res, done) {
+			const date = res.options.date;
+			if (error) {
+				console.log('Error date', date, error);
+			} else {
+				if (res.statusCode > 400) {
+					console.log('Error', date, res.statusCode);
+				} else {
+					const result = travel(res.$);
+					if (result != null) {
+						console.log(date, 'completed');
+						fs.writeFile(`/Users/renyufeng/Desktop/cvs/${date}.json`, JSON.stringify(result, null, 2), 'utf8', () => {
+						});
+					} else {
+						console.log(date, 'failed');
+					}
+				}
+			}
+			done();
+		}
+	});
+
+	const urls = DATES.map(date => {
+		return {
+			uri: `http://www.100ppi.com/sf/day-${date}.html`,
+			date: date
+		}
+	});
+
+	c.queue(urls);
 }

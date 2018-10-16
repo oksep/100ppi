@@ -1,16 +1,50 @@
 {
   "name": "100ppi",
   "version": "0.0.1",
-  "license": "MIT",
+  "description": "100ppi.com Spider",
+  "productName": "100ppi",
+  "main": "index.js",
   "scripts": {
-    "start": "tsc && node dist/index.js"
+    "start": "npm run src-compile && concurrently --kill-others \"npm run src-watch-compile\" \"npm run hotreload\"",
+    "hotreload": "nodemon",
+    "src-compile": "tsc -p src",
+    "src-watch-compile": "tsc -w -p src",
+    "run-no-assist": "electron .",
+    "compile-run": "npm run src-compile && npm run run-no-assist",
+    "build": "npm run src-compile && DEBUG=electron-packager electron-packager ./ --platform=darwin --arch=x64 --icon='./icon.icns' --out='./build/electron/' --overwrite"
   },
+  "nodemonConfig": {
+    "verbose": true,
+    "watch": [
+      "main"
+    ],
+    "exec": "electron .",
+    "env": {
+      "NODE_ENV": "development"
+    },
+    "delay": 10,
+    "ext": "js json",
+    "ignore": [
+      "*.map"
+    ]
+  },
+  "author": "",
+  "license": "ISC",
+  "private": true,
   "dependencies": {
+    "electron-default-menu": "^1.0.1",
+    "electron-is-dev": "^0.3.0",
     "commander": "^2.19.0",
     "crawler": "^1.2.0",
     "moment": "^2.22.2"
   },
   "devDependencies": {
+    "@types/electron-is-dev": "^0.3.0",
+    "concurrently": "^3.5.1",
+    "electron": "^1.8.2",
+    "electron-debug": "^1.5.0",
+    "electron-packager": "^12.1.0",
+    "nodemon": "^1.17.1",
     "@types/cheerio": "^0.22.9",
     "@types/node": "^10.11.7",
     "tslint": "^5.11.0",

@@ -1,4 +1,4 @@
-import moment from 'moment';
+import * as moment from 'moment';
 
 const DATES = [];
 const start = moment('2018-09-27', 'YYYY-MM-DD');
