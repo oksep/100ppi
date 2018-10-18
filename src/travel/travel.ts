@@ -1,12 +1,12 @@
-import * as fs from 'fs';
-
 import * as Crawler from 'crawler';
 import * as cheerio from 'cheerio';
 
-import DATES from "./date";
+import {getDates} from "./date";
 import MOCK_CONTENT from './mock/content';
 
 import {Commodity, Contracts, SpotGoods} from './model';
+
+import * as fs from 'fs';
 
 function travelTr2Exchange(tr: Cheerio): string {
 	const text = tr.children().first().text();
@@ -96,25 +96,36 @@ function travelMock() {
 	return travel($)
 }
 
-export function startCrawler() {
+export function startTravel(arg: { from, to, slowCheck, saveDir }, callback) {
+
+	const urls = getDates(arg.from, arg.to).map(date => {
+		return {
+			uri: `http://www.100ppi.com/sf/day-${date}.html`,
+			date: date
+		}
+	});
+
+	const total = urls.length;
+
 	const c = new Crawler({
-		rateLimit: 1000,
+		rateLimit: 850,
 		// maxConnections: 10,
 		callback: function (error, res, done) {
 			const date = res.options.date;
+			const uri = res.options.uri;
 			if (error) {
-				console.log('Error date', date, error);
+				callback(`failed: ${uri}`, c.queueSize - 1, total);
 			} else {
 				if (res.statusCode > 400) {
-					console.log('Error', date, res.statusCode);
+					callback(`failed: ${uri}`, c.queueSize - 1, total);
 				} else {
 					const result = travel(res.$);
 					if (result != null) {
-						console.log(date, 'completed');
-						fs.writeFile(`/Users/renyufeng/Desktop/cvs/${date}.json`, JSON.stringify(result, null, 2), 'utf8', () => {
+						fs.writeFile(`${arg.saveDir}/${date}.json`, JSON.stringify(result, null, 2), 'utf8', (err) => {
+							callback(`${err ? 'error' : 'ok'}: ${uri}`, c.queueSize - 1, total);
 						});
 					} else {
-						console.log(date, 'failed');
+						callback(`failed: ${uri}`, c.queueSize - 1, total);
 					}
 				}
 			}
@@ -122,11 +133,8 @@ export function startCrawler() {
 		}
 	});
 
-	const urls = DATES.map(date => {
-		return {
-			uri: `http://www.100ppi.com/sf/day-${date}.html`,
-			date: date
-		}
+	c.on('drain', function () {
+		callback(null, 0, total);
 	});
 
 	c.queue(urls);

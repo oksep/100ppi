@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs = require("fs");
 const Crawler = require("crawler");
 const cheerio = require("cheerio");
 const date_1 = require("./date");
 const content_1 = require("./mock/content");
 const model_1 = require("./model");
+const fs = require("fs");
 function travelTr2Exchange(tr) {
     const text = tr.children().first().text();
     if (text.includes('暂无数据')) {
@@ -70,41 +70,46 @@ function travelMock() {
     const $ = cheerio.load(content_1.default);
     return travel($);
 }
-function startCrawler() {
+function startTravel(arg, callback) {
+    const urls = date_1.getDates(arg.from, arg.to).map(date => {
+        return {
+            uri: `http://www.100ppi.com/sf/day-${date}.html`,
+            date: date
+        };
+    });
+    const total = urls.length;
     const c = new Crawler({
-        rateLimit: 1000,
+        rateLimit: 850,
         // maxConnections: 10,
         callback: function (error, res, done) {
             const date = res.options.date;
+            const uri = res.options.uri;
             if (error) {
-                console.log('Error date', date, error);
+                callback(`failed: ${uri}`, c.queueSize - 1, total);
             }
             else {
                 if (res.statusCode > 400) {
-                    console.log('Error', date, res.statusCode);
+                    callback(`failed: ${uri}`, c.queueSize - 1, total);
                 }
                 else {
                     const result = travel(res.$);
                     if (result != null) {
-                        console.log(date, 'completed');
-                        fs.writeFile(`/Users/renyufeng/Desktop/cvs/${date}.json`, JSON.stringify(result, null, 2), 'utf8', () => {
+                        fs.writeFile(`${arg.saveDir}/${date}.json`, JSON.stringify(result, null, 2), 'utf8', (err) => {
+                            callback(`${err ? 'error' : 'ok'}: ${uri}`, c.queueSize - 1, total);
                         });
                     }
                     else {
-                        console.log(date, 'failed');
+                        callback(`failed: ${uri}`, c.queueSize - 1, total);
                     }
                 }
             }
             done();
         }
     });
-    const urls = date_1.default.map(date => {
-        return {
-            uri: `http://www.100ppi.com/sf/day-${date}.html`,
-            date: date
-        };
+    c.on('drain', function () {
+        callback(null, 0, total);
     });
     c.queue(urls);
 }
-exports.startCrawler = startCrawler;
+exports.startTravel = startTravel;
 //# sourceMappingURL=travel.js.map

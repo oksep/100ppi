@@ -9,7 +9,7 @@
     "hotreload": "nodemon",
     "src-compile": "tsc -p src",
     "src-watch-compile": "tsc -w -p src",
-    "run-no-assist": "electron .",
+    "run-no-assist": "electron ./main/ --debug",
     "compile-run": "npm run src-compile && npm run run-no-assist",
     "build": "npm run src-compile && DEBUG=electron-packager electron-packager ./ --platform=darwin --arch=x64 --icon='./icon.icns' --out='./build/electron/' --overwrite"
   },
@@ -32,10 +32,12 @@
   "license": "ISC",
   "private": true,
   "dependencies": {
-    "electron-default-menu": "^1.0.1",
-    "electron-is-dev": "^0.3.0",
     "commander": "^2.19.0",
     "crawler": "^1.2.0",
+    "csv": "^4.0.0",
+    "csv-generate": "^2.2.2",
+    "electron-default-menu": "^1.0.1",
+    "electron-is-dev": "^0.3.0",
     "moment": "^2.22.2"
   },
   "devDependencies": {

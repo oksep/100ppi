@@ -1,52 +1,72 @@
 "use strict";
+// import {startCrawler} from './travel/travel';
 Object.defineProperty(exports, "__esModule", { value: true });
-const travel_1 = require("./travel/travel");
 const electron_1 = require("electron");
-const isDev = require("electron-is-dev");
-const path = require("path");
-const url = require("url");
-const menu_1 = require("./menu");
-let win;
-function createWindow() {
-    const option = {
-        width: 920,
-        height: 750,
-        minWidth: 930,
-        minHeight: 500,
-        backgroundColor: '#fff',
-        frame: false,
-        titleBarStyle: 'hidden',
-    };
-    win = new electron_1.BrowserWindow(option);
-    if (isDev) {
-        win.loadURL('http://127.0.0.1:8080');
+const travel_1 = require("./travel/travel");
+const path = require('path');
+const debug = /--debug/.test(process.argv[2]);
+if (process.mas)
+    electron_1.app.setName('Electron APIs');
+let mainWindow = null;
+function initialize() {
+    let shouldQuit = makeSingleInstance();
+    if (shouldQuit)
+        return electron_1.app.quit();
+    function createWindow() {
+        const windowOptions = {
+            width: 650,
+            height: 600,
+            title: '100ppi',
+            resizable: false,
+            fullscreenable: false
+        };
+        mainWindow = new electron_1.BrowserWindow(windowOptions);
+        mainWindow.loadURL(path.join('file://', __dirname, '../render/index.html'));
+        // Launch fullscreen with DevTools open, usage: npm run debug
+        if (debug) {
+            // mainWindow.webContents.openDevTools();
+            // mainWindow.maximize();
+        }
+        mainWindow.on('closed', function () {
+            mainWindow = null;
+        });
     }
-    else {
-        win.loadURL(url.format({
-            pathname: path.join(__dirname, '../render/index.html'),
-            protocol: 'file:',
-            slashes: true,
-        }));
-    }
-    win.on('closed', () => {
-        win = null;
+    electron_1.app.on('ready', function () {
+        createWindow();
+    });
+    electron_1.app.on('window-all-closed', function () {
+        if (process.platform !== 'darwin') {
+            electron_1.app.quit();
+        }
+    });
+    electron_1.app.on('activate', function () {
+        if (mainWindow === null) {
+            createWindow();
+        }
     });
 }
-electron_1.app.on('ready', () => {
-    // Get template for default menu
-    const menu = menu_1.default(electron_1.app, electron_1.shell);
-    // Set top-level application menu, using modified template
-    electron_1.Menu.setApplicationMenu(electron_1.Menu.buildFromTemplate(menu));
-    createWindow();
-});
-electron_1.app.on('window-all-closed', () => {
-});
-electron_1.app.on('activate', () => {
-    if (win == null) {
-        createWindow();
-    }
-});
-electron_1.ipcMain.on('request-start-crawler', (event, arg) => {
-    travel_1.startCrawler();
+// Make this app a single instance app.
+//
+// The main window will be restored and focused instead of a second window
+// opened when a person attempts to launch a second instance.
+//
+// Returns true if the current version of the app should quit instead of
+// launching.
+function makeSingleInstance() {
+    if (process.mas)
+        return false;
+    return electron_1.app.makeSingleInstance(function () {
+        if (mainWindow) {
+            if (mainWindow.isMinimized())
+                mainWindow.restore();
+            mainWindow.focus();
+        }
+    });
+}
+initialize();
+electron_1.ipcMain.on('request-travel', (event, arg) => {
+    travel_1.startTravel(arg, (msg, remain, total) => {
+        event.sender.send('response-request-travel', { msg, remain, total });
+    });
 });
 //# sourceMappingURL=index.js.map
