@@ -114,10 +114,10 @@ export function startTravel(arg: { from, to, slowCheck, saveDir }, callback) {
 			const date = res.options.date;
 			const uri = res.options.uri;
 			if (error) {
-				callback(`failed: ${uri}`, c.queueSize - 1, total);
+				callback(`failed: ${uri}`, c.queueSize, total);
 			} else {
 				if (res.statusCode > 400) {
-					callback(`failed: ${uri}`, c.queueSize - 1, total);
+					callback(`failed: ${uri}`, c.queueSize, total);
 				} else {
 					const result = travel(res.$);
 					if (result != null) {
@@ -125,7 +125,7 @@ export function startTravel(arg: { from, to, slowCheck, saveDir }, callback) {
 							callback(`${err ? 'error' : 'ok'}: ${uri}`, c.queueSize - 1, total);
 						});
 					} else {
-						callback(`failed: ${uri}`, c.queueSize - 1, total);
+						callback(`failed: ${uri}`, c.queueSize, total);
 					}
 				}
 			}
@@ -134,7 +134,7 @@ export function startTravel(arg: { from, to, slowCheck, saveDir }, callback) {
 	});
 
 	c.on('drain', function () {
-		callback(null, 0, total);
+		callback(null, 1, total);
 	});
 
 	c.queue(urls);

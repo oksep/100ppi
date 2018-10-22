@@ -85,11 +85,11 @@ function startTravel(arg, callback) {
             const date = res.options.date;
             const uri = res.options.uri;
             if (error) {
-                callback(`failed: ${uri}`, c.queueSize - 1, total);
+                callback(`failed: ${uri}`, c.queueSize, total);
             }
             else {
                 if (res.statusCode > 400) {
-                    callback(`failed: ${uri}`, c.queueSize - 1, total);
+                    callback(`failed: ${uri}`, c.queueSize, total);
                 }
                 else {
                     const result = travel(res.$);
@@ -99,7 +99,7 @@ function startTravel(arg, callback) {
                         });
                     }
                     else {
-                        callback(`failed: ${uri}`, c.queueSize - 1, total);
+                        callback(`failed: ${uri}`, c.queueSize, total);
                     }
                 }
             }
@@ -107,7 +107,7 @@ function startTravel(arg, callback) {
         }
     });
     c.on('drain', function () {
-        callback(null, 0, total);
+        callback(null, 1, total);
     });
     c.queue(urls);
 }

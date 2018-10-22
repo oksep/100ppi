@@ -34,10 +34,9 @@
   "dependencies": {
     "commander": "^2.19.0",
     "crawler": "^1.2.0",
-    "csv": "^4.0.0",
-    "csv-generate": "^2.2.2",
     "electron-default-menu": "^1.0.1",
     "electron-is-dev": "^0.3.0",
+    "json2csv": "^4.2.1",
     "moment": "^2.22.2"
   },
   "devDependencies": {
