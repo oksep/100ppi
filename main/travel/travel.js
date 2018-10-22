@@ -1,9 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Crawler = require("crawler");
-const cheerio = require("cheerio");
 const date_1 = require("./date");
-const content_1 = require("./mock/content");
 const model_1 = require("./model");
 const fs = require("fs");
 function travelTr2Exchange(tr) {
@@ -66,11 +64,70 @@ function travel($) {
     }
     return result;
 }
-function travelMock() {
-    const $ = cheerio.load(content_1.default);
-    return travel($);
+function travel2($) {
+    const trs = $('#fdata.ftab').children();
+    const list = [];
+    let lastExchangeName = 'Unknown';
+    for (let i = 2; i < trs.length; i++) {
+        const tr = trs.eq(i);
+        try {
+            const exchangeName = travelTr2Exchange(tr);
+            if (exchangeName != null) {
+                lastExchangeName = exchangeName;
+            }
+            else {
+                list.push(travelTr2Commodity(tr));
+            }
+        }
+        catch (e) {
+            return null;
+        }
+    }
+    return list;
 }
 function startTravel(arg, callback) {
+    const fileStateCache = {};
+    function dump(saveDir, date, list) {
+        list.forEach((item) => {
+            const file = `${saveDir}/${item.name}.csv`;
+            const firstDump = fileStateCache[item.name];
+            if (!firstDump) {
+                fileStateCache[item.name] = true;
+                if (fs.existsSync(file)) {
+                    fs.unlinkSync(file);
+                }
+                const title = [
+                    '日期',
+                    '现货',
+                    '最近合约  代码',
+                    '最近合约  价格',
+                    '最近合约  现期差 value',
+                    '最近合约  现期差 percent',
+                    '主力合约  代码',
+                    '主力合约  价格',
+                    '主力合约  现期差 value',
+                    '主力合约  现期差 percent'
+                ].join(',') + '\n';
+                fs.appendFileSync(file, title, { encoding: 'utf-8' });
+            }
+            const text = [
+                date,
+                // 现货
+                item.spotGoods.price,
+                // 最近合约
+                item.recentContracts.code,
+                item.recentContracts.price,
+                item.recentContracts.numbricValue,
+                item.recentContracts.percentValue,
+                // 主力合约
+                item.mainContracts.code,
+                item.mainContracts.price,
+                item.mainContracts.numbricValue,
+                item.mainContracts.percentValue,
+            ].join(',') + '\n';
+            fs.appendFileSync(file, text, { encoding: 'utf-8' });
+        });
+    }
     const urls = date_1.getDates(arg.from, arg.to).map(date => {
         return {
             uri: `http://www.100ppi.com/sf/day-${date}.html`,
@@ -92,11 +149,16 @@ function startTravel(arg, callback) {
                     callback(`failed: ${uri}`, c.queueSize, total);
                 }
                 else {
-                    const result = travel(res.$);
+                    const result = travel2(res.$);
                     if (result != null) {
-                        fs.writeFile(`${arg.saveDir}/${date}.json`, JSON.stringify(result, null, 2), 'utf8', (err) => {
-                            callback(`${err ? 'error' : 'ok'}: ${uri}`, c.queueSize - 1, total);
-                        });
+                        try {
+                            dump(arg.saveDir, date, result);
+                            callback(`ok: ${uri}`, c.queueSize, total);
+                        }
+                        catch (e) {
+                            console.error('Error', e);
+                            callback(`Error: ${uri}`, c.queueSize, total);
+                        }
                     }
                     else {
                         callback(`failed: ${uri}`, c.queueSize, total);

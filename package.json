@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "100ppi.com Spider",
   "productName": "100ppi",
-  "main": "index.js",
+  "main": "main/index.js",
   "scripts": {
     "start": "npm run src-compile && concurrently --kill-others \"npm run src-watch-compile\" \"npm run hotreload\"",
     "hotreload": "nodemon",
@@ -36,7 +36,6 @@
     "crawler": "^1.2.0",
     "electron-default-menu": "^1.0.1",
     "electron-is-dev": "^0.3.0",
-    "json2csv": "^4.2.1",
     "moment": "^2.22.2"
   },
   "devDependencies": {

@@ -76,7 +76,8 @@ function makeSingleInstance() {
 initialize();
 
 ipcMain.on('request-travel', (event, arg) => {
-	startTravel(arg, (msg, remain, total) => {
+	startTravel(arg, (msg, current, total) => {
+		const remain = current - 1;
 		event.sender.send('response-request-travel', {msg, remain, total});
 	});
 });

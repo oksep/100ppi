@@ -15,11 +15,12 @@ const moment = require('moment');
 	}
 })();
 
+var saveDir = null;
 
 function getfolder(e) {
 	const files = e.target.files;
-	const path = files[0].path;
-	$('#fileLabel').text(path)
+	saveDir = files[0].path;
+	$('#fileLabel').text(saveDir);
 }
 
 $(document).ready(function () {
@@ -37,7 +38,7 @@ function init() {
 		setProcess(parseInt(percent));
 
 		if (arg.msg) {
-			console.log(arg.msg + ' ' + arg.remain + ' ' + parseInt(percent));
+			console.log(arg.msg);
 		}
 
 		if (arg.remain == 0) {
@@ -79,7 +80,6 @@ function startTravel() {
 	const from = $('#from-date-input').val();
 	const to = $('#to-date-input').val();
 	const slowCheck = $('#slow-check').prop('checked');
-	const saveDir = $('#fileLabel').text();
 
 	if (!from || !to || !saveDir) {
 		console.log('参数不正确');
@@ -95,6 +95,6 @@ function startTravel() {
 }
 
 function mock() {
-	$('#from-date-input').val('2018-10-01');
-	$('#to-date-input').val('2018-10-10');
+	// $('#from-date-input').val('2018-10-01');
+	// $('#to-date-input').val('2018-10-10');
 }
