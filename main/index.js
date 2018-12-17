@@ -65,7 +65,8 @@ function makeSingleInstance() {
 }
 initialize();
 electron_1.ipcMain.on('request-travel', (event, arg) => {
-    travel_1.startTravel(arg, (msg, remain, total) => {
+    travel_1.startTravel(arg, (msg, current, total) => {
+        const remain = current - 1;
         event.sender.send('response-request-travel', { msg, remain, total });
     });
 });

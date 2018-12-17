@@ -1,8 +1,6 @@
 import * as Crawler from 'crawler';
-import * as cheerio from 'cheerio';
 
 import {getDates} from "./date";
-import MOCK_CONTENT from './mock/content';
 
 import {Commodity, Contracts, SpotGoods} from './model';
 
@@ -91,12 +89,76 @@ function travel($: CheerioStatic): any {
 	return result;
 }
 
-function travelMock() {
-	const $ = cheerio.load(MOCK_CONTENT);
-	return travel($)
+function travel2($: CheerioStatic): Commodity[] {
+	const trs = $('#fdata.ftab').children();
+	const list: Commodity[] = [];
+
+	let lastExchangeName = 'Unknown';
+
+	for (let i = 2; i < trs.length; i++) {
+		const tr = trs.eq(i);
+
+		try {
+			const exchangeName = travelTr2Exchange(tr);
+			if (exchangeName != null) {
+				lastExchangeName = exchangeName;
+			} else {
+				list.push(travelTr2Commodity(tr));
+			}
+		} catch (e) {
+			return null;
+		}
+	}
+	return list;
 }
 
 export function startTravel(arg: { from, to, slowCheck, saveDir }, callback) {
+
+	const fileStateCache: {
+		[key: string]: boolean
+	} = {};
+
+	function dump(saveDir: string, date: string, list: Commodity[]) {
+		list.forEach((item: Commodity) => {
+			const file = `${saveDir}/${item.name}.csv`;
+			const firstDump = fileStateCache[item.name];
+			if (!firstDump) {
+				fileStateCache[item.name] = true;
+				if (fs.existsSync(file)) {
+					fs.unlinkSync(file);
+				}
+				const title = [
+					'日期',
+					'现货',
+					'最近合约  代码',
+					'最近合约  价格',
+					'最近合约  现期差 value',
+					'最近合约  现期差 percent',
+					'主力合约  代码',
+					'主力合约  价格',
+					'主力合约  现期差 value',
+					'主力合约  现期差 percent'
+				].join(',') + '\n';
+				fs.appendFileSync(file, title, {encoding: 'utf-8'});
+			}
+			const text = [
+				date,
+				// 现货
+				item.spotGoods.price,
+				// 最近合约
+				item.recentContracts.code,
+				item.recentContracts.price,
+				item.recentContracts.numbricValue,
+				item.recentContracts.percentValue,
+				// 主力合约
+				item.mainContracts.code,
+				item.mainContracts.price,
+				item.mainContracts.numbricValue,
+				item.mainContracts.percentValue,
+			].join(',') + '\n';
+			fs.appendFileSync(file, text, {encoding: 'utf-8'});
+		});
+	}
 
 	const urls = getDates(arg.from, arg.to).map(date => {
 		return {
@@ -119,11 +181,15 @@ export function startTravel(arg: { from, to, slowCheck, saveDir }, callback) {
 				if (res.statusCode > 400) {
 					callback(`failed: ${uri}`, c.queueSize, total);
 				} else {
-					const result = travel(res.$);
+					const result = travel2(res.$);
 					if (result != null) {
-						fs.writeFile(`${arg.saveDir}/${date}.json`, JSON.stringify(result, null, 2), 'utf8', (err) => {
-							callback(`${err ? 'error' : 'ok'}: ${uri}`, c.queueSize - 1, total);
-						});
+						try {
+							dump(arg.saveDir, date, result);
+							callback(`ok: ${uri}`, c.queueSize, total);
+						} catch (e) {
+							console.error('Error', e);
+							callback(`Error: ${uri}`, c.queueSize, total);
+						}
 					} else {
 						callback(`failed: ${uri}`, c.queueSize, total);
 					}
