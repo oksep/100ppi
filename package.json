@@ -18,7 +18,7 @@
     "watch": [
       "main"
     ],
-    "exec": "electron .",
+    "exec": "electron ./main/ --debug",
     "env": {
       "NODE_ENV": "development"
     },
