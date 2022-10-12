@@ -43,7 +43,7 @@
     "concurrently": "^3.5.1",
     "electron": "^1.8.2",
     "electron-debug": "^1.5.0",
-    "electron-packager": "^12.1.0",
+    "electron-packager": "^16.0.0",
     "nodemon": "^1.17.1",
     "@types/cheerio": "^0.22.9",
     "@types/node": "^10.11.7",
